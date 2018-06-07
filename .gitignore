@@ -1,0 +1,12 @@
+# Go Vendor folders
+/vendor/
+
+# Windows Binaries
+*.exe
+
+# VS Code stuff
+/.vscode/
+
+# VS Code debugger binaries
+debug
+debug.test
