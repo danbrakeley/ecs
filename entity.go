@@ -22,7 +22,7 @@ func (e *Entity) GetManager() *Manager {
 
 // AddComponent adds the component instance to this Entity.
 // This call also updates all Systems that might care.
-// Returns *Entity to allow for chaining of AddComponent calls.
+// Returns *Entity to allow for chaining of other calls.
 func (e *Entity) AddComponent(c Component) *Entity {
 	if e.isDead {
 		panic(fmt.Errorf("Cannot add %s to entity %s because the entity is dead", c.GetName(), e.GetID()))
@@ -35,6 +35,23 @@ func (e *Entity) AddComponent(c Component) *Entity {
 	}
 	c.SetEntity(e)
 	e.components[c.GetName()] = c
+	e.manager.UpdateEntity(e)
+	return e
+}
+
+// RemoveComponent removes the component instance from this Entity.
+// This call also updates all Systems that might care.
+// Returns *Entity to allow for chaining of other calls.
+func (e *Entity) RemoveComponent(c Component) *Entity {
+	if e.isDead {
+		panic(fmt.Errorf("Cannot remove %s from entity %s because the entity is dead", c.GetName(), e.GetID()))
+	}
+	oldEntity := c.GetEntity()
+	if oldEntity == nil || oldEntity.GetID() != e.GetID() {
+		panic(fmt.Errorf("Component %s doesn't belong to entity %s, and thus cannot be removed", c.GetName(), e.GetID()))
+	}
+	c.SetEntity(nil)
+	delete(e.components, c.GetName())
 	e.manager.UpdateEntity(e)
 	return e
 }
