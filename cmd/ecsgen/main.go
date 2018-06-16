@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	version         = "0.3.1"
+	version         = "0.4.0"
 	templatedOutput = `package {{.Package}}
 
 import (
@@ -31,54 +31,54 @@ import (
 //
 
 func init() {
-{{range .Components}}	ecs.RegisterComponent({{.Name}}Name, Deserialize{{.Name}})
+{{range .Components}}	ecs.RegisterComponent({{.ComNameVarName}}, Deserialize{{.TypeName}})
 {{end}}}
 {{range .Components}}
 //
-// *** {{.Name}} ***
+// *** {{.TypeName}} ***
 
-// {{.Name}}Name is {{.Name}}'s ComponentName
-const {{.Name}}Name ecs.ComponentName = "{{.Name}}"
+// {{.ComNameVarName}} is {{.TypeName}}'s ComponentName
+const {{.ComNameVarName}} ecs.ComponentName = "{{.ComNameLiteral}}"
 
-// Get{{.Name}} returns any {{.Name}} on the given Entity
-func Get{{.Name}}(e *ecs.Entity) *{{.Name}} {
-	if c := e.GetComponent({{.Name}}Name); c != nil {
-		return c.(*{{.Name}})
+// Get{{.TypeName}} returns any {{.TypeName}} on the given Entity
+func Get{{.TypeName}}(e *ecs.Entity) *{{.TypeName}} {
+	if c := e.GetComponent({{.ComNameVarName}}); c != nil {
+		return c.(*{{.TypeName}})
 	}
 	return nil
 }
 
 // GetName is from the Component interface
-func (c *{{.Name}}) GetName() ecs.ComponentName {
-	return {{.Name}}Name
+func (c *{{.TypeName}}) GetName() ecs.ComponentName {
+	return {{.ComNameVarName}}
 }
 {{if (eq .HasSerializer false)}}
-// Serialize writes this {{.Name}} to the given buffer
-func (c *{{.Name}}) Serialize(buf *bytes.Buffer) error {
+// Serialize writes this {{.TypeName}} to the given buffer
+func (c *{{.TypeName}}) Serialize(buf *bytes.Buffer) error {
 	return ecs.SerializeToJSON(buf, c)
 }
 {{end}}{{if (eq .HasDeserializer false)}}
-// Deserialize{{.Name}} creates a {{.Name}} from the given buffer
-func Deserialize{{.Name}}(mgr *ecs.Manager, e *ecs.Entity, buf *bytes.Buffer) error {
-	return fmt.Errorf("Deserialize{{.Name}} not implemented")
+// Deserialize{{.TypeName}} creates a {{.TypeName}} from the given buffer
+func Deserialize{{.TypeName}}(mgr *ecs.Manager, e *ecs.Entity, buf *bytes.Buffer) error {
+	return fmt.Errorf("Deserialize{{.TypeName}} not implemented")
 }
 {{end}}
 //
-// {{.Name}}Ref is a {{.Name}} reference that can be serialized
-type {{.Name}}Ref struct {
+// {{.TypeName}}Ref is a {{.TypeName}} reference that can be serialized
+type {{.TypeName}}Ref struct {
 	mgr      *ecs.Manager
 	parentID string
 }
 
-// New{{.Name}}Ref constructs a {{.Name}}Ref
-func New{{.Name}}Ref(c *{{.Name}}) {{.Name}}Ref {
-	var r {{.Name}}Ref
+// New{{.TypeName}}Ref constructs a {{.TypeName}}Ref
+func New{{.TypeName}}Ref(c *{{.TypeName}}) {{.TypeName}}Ref {
+	var r {{.TypeName}}Ref
 	r.Set(c)
 	return r
 }
 
 // Set updates this reference to point to the given component (or nil)
-func (r *{{.Name}}Ref) Set(c *{{.Name}}) {
+func (r *{{.TypeName}}Ref) Set(c *{{.TypeName}}) {
 	if c == nil {
 		r.mgr = nil
 		r.parentID = ""
@@ -89,20 +89,20 @@ func (r *{{.Name}}Ref) Set(c *{{.Name}}) {
 }
 
 // IsNil checks if the component pointer == nil
-func (r {{.Name}}Ref) IsNil() bool {
+func (r {{.TypeName}}Ref) IsNil() bool {
 	return len(r.parentID) == 0
 }
 
-// Get resolves this reference to a {{.Name}} pointer
-func (r {{.Name}}Ref) Get() *{{.Name}} {
+// Get resolves this reference to a {{.TypeName}} pointer
+func (r {{.TypeName}}Ref) Get() *{{.TypeName}} {
 	if r.IsNil() {
 		return nil
 	}
-	return Get{{.Name}}(r.mgr.GetEntity(r.parentID))
+	return Get{{.TypeName}}(r.mgr.GetEntity(r.parentID))
 }
 
 // GetEntity resolves the Entity owning the referenced component
-func (r {{.Name}}Ref) GetEntity() *ecs.Entity {
+func (r {{.TypeName}}Ref) GetEntity() *ecs.Entity {
 	if r.IsNil() {
 		return nil
 	}
@@ -110,7 +110,7 @@ func (r {{.Name}}Ref) GetEntity() *ecs.Entity {
 }
 
 // Serialize just writes out the parent entity id
-func (r {{.Name}}Ref) Serialize(buf *bytes.Buffer) error {
+func (r {{.TypeName}}Ref) Serialize(buf *bytes.Buffer) error {
 	if r.IsNil() {
 		buf.WriteString("null")
 		return nil
@@ -148,7 +148,9 @@ type Vars struct {
 // Component is the component name and line upon which it was found
 type Component struct {
 	Line            int
-	Name            string
+	TypeName        string
+	ComNameLiteral  string
+	ComNameVarName  string
 	HasSerializer   bool
 	HasDeserializer bool
 }
@@ -182,6 +184,12 @@ func main() {
 		if len(vars.Components) == 0 {
 			panic(fmt.Errorf("No components found in file %s", vars.File))
 		}
+	}
+
+	// generate full component names
+	for i := range vars.Components {
+		vars.Components[i].ComNameLiteral = strings.Title(vars.Package) + vars.Components[i].TypeName
+		vars.Components[i].ComNameVarName = vars.Components[i].TypeName + "Name"
 	}
 
 	// make generated file name

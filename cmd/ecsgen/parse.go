@@ -26,7 +26,7 @@ func getComponents(r io.Reader) []Component {
 		if reComBase.MatchString(curLine) {
 			m := reTypeStruct.FindStringSubmatch(lastLine)
 			if len(m) > 1 && len(m[1]) > 0 {
-				coms = append(coms, Component{Line: line, Name: m[1]})
+				coms = append(coms, Component{Line: line, TypeName: m[1]})
 			}
 		}
 
@@ -48,8 +48,8 @@ func getComponents(r io.Reader) []Component {
 
 	// fill in deserializer info for any found components
 	for i := range coms {
-		coms[i].HasSerializer = hasSerializer[coms[i].Name]
-		coms[i].HasDeserializer = hasDeserializer[coms[i].Name]
+		coms[i].HasSerializer = hasSerializer[coms[i].TypeName]
+		coms[i].HasDeserializer = hasDeserializer[coms[i].TypeName]
 	}
 
 	if err := scanner.Err(); err != nil {

@@ -12,22 +12,22 @@ import (
 
 //go:generate ecsgen --package "$GOPACKAGE" --file "$GOFILE"
 
-// TestSerialCom is a serializable component
-type TestSerialCom struct {
+// SerialCom is a serializable component
+type SerialCom struct {
 	ecs.ComponentBase
 	N int `json:"n"`
 }
 
-func (c *TestSerialCom) Serialize(buf *bytes.Buffer) error {
+func (c *SerialCom) Serialize(buf *bytes.Buffer) error {
 	if err := ecs.SerializeToJSON(buf, c); err != nil {
 		return err
 	}
 	return nil
 }
 
-// DeserializeTestSerialCom creates a TestSerialCom from the given buffer
-func DeserializeTestSerialCom(mgr *ecs.Manager, e *ecs.Entity, buf *bytes.Buffer) error {
-	var com TestSerialCom
+// DeserializeSerialCom creates a SerialCom from the given buffer
+func DeserializeSerialCom(mgr *ecs.Manager, e *ecs.Entity, buf *bytes.Buffer) error {
+	var com SerialCom
 	if err := json.Unmarshal(buf.Bytes(), &com); err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func DeserializeTestSerialCom(mgr *ecs.Manager, e *ecs.Entity, buf *bytes.Buffer
 func Test_Serialize_SingleField(t *testing.T) {
 	mgr := ecs.NewManager()
 	e := mgr.NewEntity()
-	e.AddComponent(&TestSerialCom{N: 1})
+	e.AddComponent(&SerialCom{N: 1})
 
 	buf := bytes.NewBuffer(make([]byte, 0, 512))
 	err := e.Serialize(buf)
@@ -56,7 +56,7 @@ func Test_Serialize_SingleField(t *testing.T) {
 func Test_Deserialize_SingleEntity(t *testing.T) {
 	mgr := ecs.NewManager()
 	e := mgr.NewEntity()
-	e.AddComponent(&TestSerialCom{N: 1})
+	e.AddComponent(&SerialCom{N: 1})
 
 	buf := bytes.NewBuffer(make([]byte, 0, 512))
 	err := e.Serialize(buf)
@@ -69,48 +69,48 @@ func Test_Deserialize_SingleEntity(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error in DeserializeEntity: %v", err)
 	}
-	cNew := GetTestSerialCom(eNew)
+	cNew := GetSerialCom(eNew)
 	if cNew == nil {
-		t.Fatalf("Deserialized entity missing TestSerialCom")
+		t.Fatalf("Deserialized entity missing SerialCom")
 	}
 
 	if cNew.N != 1 {
-		t.Errorf("Deserialized TestSerialCom has %d for N, expected 1", cNew.N)
+		t.Errorf("Deserialized SerialCom has %d for N, expected 1", cNew.N)
 	}
 }
 
-// TestSerialMultiCom is a serializable component with multiple fields of different types
-type TestSerialMultiCom struct {
+// SerialMultiCom is a serializable component with multiple fields of different types
+type SerialMultiCom struct {
 	ecs.ComponentBase
 	Foo    string `json:"foo"`
 	BarBaz string `json:"bar_baz"`
 }
 
-func (c *TestSerialMultiCom) Serialize(buf *bytes.Buffer) error {
+func (c *SerialMultiCom) Serialize(buf *bytes.Buffer) error {
 	if err := ecs.SerializeToJSON(buf, c); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *TestSerialMultiCom) Deserialize(buf *bytes.Buffer) error {
+func (c *SerialMultiCom) Deserialize(buf *bytes.Buffer) error {
 	return nil
 }
 
-// TestSerialRefCom is a serializable component with a reference to another entity's component
-type TestSerialRefCom struct {
+// SerialRefCom is a serializable component with a reference to another entity's component
+type SerialRefCom struct {
 	ecs.ComponentBase
-	Ref TestEmptyComRef `json:"ref"`
+	Ref EmptyComRef `json:"ref"`
 }
 
-func (c *TestSerialRefCom) Serialize(buf *bytes.Buffer) error {
+func (c *SerialRefCom) Serialize(buf *bytes.Buffer) error {
 	buf.WriteString(`{"ref":`)
 	c.Ref.Serialize(buf)
 	buf.WriteString(`}`)
 	return nil
 }
 
-func (c *TestSerialRefCom) Deserialize(buf *bytes.Buffer) error {
+func (c *SerialRefCom) Deserialize(buf *bytes.Buffer) error {
 	return nil
 }
 
@@ -120,7 +120,7 @@ func (c *TestSerialRefCom) Deserialize(buf *bytes.Buffer) error {
 func Test_Serialize_MultipleFields(t *testing.T) {
 	mgr := ecs.NewManager()
 	e := mgr.NewEntity()
-	e.AddComponent(&TestSerialMultiCom{Foo: "a", BarBaz: "b"})
+	e.AddComponent(&SerialMultiCom{Foo: "a", BarBaz: "b"})
 
 	buf := bytes.NewBuffer(make([]byte, 0, 512))
 	err := e.Serialize(buf)
@@ -138,11 +138,11 @@ func Test_Serialize_MultipleFields(t *testing.T) {
 func Test_Serialize_Reference(t *testing.T) {
 	mgr := ecs.NewManager()
 	e1 := mgr.NewEntity()
-	sc := TestEmptyCom{}
+	sc := EmptyCom{}
 	e1.AddComponent(&sc)
 
 	e2 := mgr.NewEntity()
-	rc := TestSerialRefCom{Ref: NewTestEmptyComRef(&sc)}
+	rc := SerialRefCom{Ref: NewEmptyComRef(&sc)}
 	e2.AddComponent(&rc)
 
 	buf := bytes.NewBuffer(make([]byte, 0, 512))

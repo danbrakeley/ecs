@@ -84,7 +84,7 @@ func createMgrAndReceiveSys() (*ecs.Manager, *receiverSys) {
 
 func Test_ECS_SystemsUpdatedOnAddComponent(t *testing.T) {
 	mgr, s := createMgrAndBaseSys()
-	c := &TestEmptyCom{}
+	c := &EmptyCom{}
 	e := mgr.NewEntity()
 	e.AddComponent(c)
 
@@ -95,7 +95,7 @@ func Test_ECS_SystemsUpdatedOnAddComponent(t *testing.T) {
 
 func Test_ECS_SystemsAlertedToDrop(t *testing.T) {
 	mgr, s := createMgrAndBaseSys()
-	c := &TestEmptyCom{}
+	c := &EmptyCom{}
 	e := mgr.NewEntity()
 	e.AddComponent(c)
 

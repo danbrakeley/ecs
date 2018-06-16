@@ -12,25 +12,25 @@ func assertCom(t *testing.T, actual, expected []Component) {
 		return
 	}
 	for i := range expected {
-		if expected[i].Name != actual[i].Name {
-			t.Errorf("Expected component[%d] to be named \"%s\", but found \"%s\"", i, expected[i].Name, actual[i].Name)
+		if expected[i].TypeName != actual[i].TypeName {
+			t.Errorf("Expected component[%d] to be named \"%s\", but found \"%s\"", i, expected[i].TypeName, actual[i].TypeName)
 		}
 		if expected[i].Line != actual[i].Line {
-			t.Errorf("Expected %s to be on line %d, but found on line %d", expected[i].Name, expected[i].Line, actual[i].Line)
+			t.Errorf("Expected %s to be on line %d, but found on line %d", expected[i].TypeName, expected[i].Line, actual[i].Line)
 		}
 		if expected[i].HasSerializer != actual[i].HasSerializer {
 			str := "have"
 			if !expected[i].HasSerializer {
 				str = "not " + str
 			}
-			t.Errorf("Expected %s to %s a serializer", expected[i].Name, str)
+			t.Errorf("Expected %s to %s a serializer", expected[i].TypeName, str)
 		}
 		if expected[i].HasDeserializer != actual[i].HasDeserializer {
 			str := "have"
 			if !expected[i].HasDeserializer {
 				str = "not " + str
 			}
-			t.Errorf("Expected %s to %s a deserializer", expected[i].Name, str)
+			t.Errorf("Expected %s to %s a deserializer", expected[i].TypeName, str)
 		}
 	}
 }
@@ -60,7 +60,7 @@ type PosCom struct {
 func Test_GetComponents(t *testing.T) {
 	coms := getComponents(bytes.NewReader([]byte(oneComNoSerialization)))
 	assertCom(t, coms, []Component{
-		Component{Name: "PosCom", Line: 11, HasSerializer: false, HasDeserializer: false},
+		Component{TypeName: "PosCom", Line: 11, HasSerializer: false, HasDeserializer: false},
 	})
 }
 
@@ -101,8 +101,8 @@ type SecondCom struct {
 func Test_GetComponents_TwoComsOneSerializer(t *testing.T) {
 	coms := getComponents(bytes.NewReader([]byte(twoComsOneSerializer)))
 	assertCom(t, coms, []Component{
-		Component{Name: "PosCom", Line: 13, HasSerializer: true, HasDeserializer: false},
-		Component{Name: "SecondCom", Line: 25, HasSerializer: false, HasDeserializer: false},
+		Component{TypeName: "PosCom", Line: 13, HasSerializer: true, HasDeserializer: false},
+		Component{TypeName: "SecondCom", Line: 25, HasSerializer: false, HasDeserializer: false},
 	})
 }
 
@@ -143,8 +143,8 @@ type SecondCom struct {
 func Test_GetComponents_TwoComsOneDeserializer(t *testing.T) {
 	coms := getComponents(bytes.NewReader([]byte(twoComsOneDeserializer)))
 	assertCom(t, coms, []Component{
-		Component{Name: "PosCom", Line: 13, HasSerializer: false, HasDeserializer: true},
-		Component{Name: "SecondCom", Line: 25, HasSerializer: false, HasDeserializer: false},
+		Component{TypeName: "PosCom", Line: 13, HasSerializer: false, HasDeserializer: true},
+		Component{TypeName: "SecondCom", Line: 25, HasSerializer: false, HasDeserializer: false},
 	})
 }
 
@@ -189,7 +189,7 @@ func DeserializeSecondCom(mgr *ecs.Manager, buf *bytes.Buffer) error {
 func Test_GetComponents_TwoComsOneBiDirectional(t *testing.T) {
 	coms := getComponents(bytes.NewReader([]byte(twoComsOneBi)))
 	assertCom(t, coms, []Component{
-		Component{Name: "PosCom", Line: 13, HasSerializer: false, HasDeserializer: false},
-		Component{Name: "SecondCom", Line: 21, HasSerializer: true, HasDeserializer: true},
+		Component{TypeName: "PosCom", Line: 13, HasSerializer: false, HasDeserializer: false},
+		Component{TypeName: "SecondCom", Line: 21, HasSerializer: true, HasDeserializer: true},
 	})
 }

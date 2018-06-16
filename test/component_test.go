@@ -9,13 +9,13 @@ import (
 
 //go:generate ecsgen --package "$GOPACKAGE" --file "$GOFILE"
 
-// TestEmptyCom is a component with no fields
-type TestEmptyCom struct {
+// EmptyCom is a component with no fields
+type EmptyCom struct {
 	ecs.ComponentBase
 }
 
-// DeserializeTestEmptyCom is this component's deserialization function
-func DeserializeTestEmptyCom(mgr *ecs.Manager, e *ecs.Entity, buf *bytes.Buffer) error {
+// DeserializeEmptyCom is this component's deserialization function
+func DeserializeEmptyCom(mgr *ecs.Manager, e *ecs.Entity, buf *bytes.Buffer) error {
 	return nil
 }
 
@@ -24,7 +24,7 @@ func DeserializeTestEmptyCom(mgr *ecs.Manager, e *ecs.Entity, buf *bytes.Buffer)
 
 func Test_Component_ComponentSetsOwningEntity(t *testing.T) {
 	mgr, _ := createMgrAndBaseSys()
-	c := &TestEmptyCom{}
+	c := &EmptyCom{}
 	e := mgr.NewEntity()
 	e.AddComponent(c)
 
@@ -35,7 +35,7 @@ func Test_Component_ComponentSetsOwningEntity(t *testing.T) {
 
 func Test_Component_CannotAddComponentToTwoEntities(t *testing.T) {
 	mgr, _ := createMgrAndBaseSys()
-	c := &TestEmptyCom{}
+	c := &EmptyCom{}
 	e1 := mgr.NewEntity()
 	e1.AddComponent(c)
 	e2 := mgr.NewEntity()
@@ -49,18 +49,18 @@ func Test_Component_ReferenceIsNil(t *testing.T) {
 	mgr := ecs.NewManager()
 
 	e1 := mgr.NewEntity()
-	c1 := TestEmptyCom{}
+	c1 := EmptyCom{}
 	e1.AddComponent(&c1)
 
 	e2 := mgr.NewEntity()
-	c2 := TestSerialRefCom{}
+	c2 := SerialRefCom{}
 	e2.AddComponent(&c2)
 
 	if !c2.Ref.IsNil() {
 		t.Errorf("Component reference is not nil (but should be)")
 	}
 
-	c2.Ref = NewTestEmptyComRef(&c1)
+	c2.Ref = NewEmptyComRef(&c1)
 
 	if c2.Ref.IsNil() {
 		t.Errorf("Component reference is nil (but shouldn't be)")
@@ -71,11 +71,11 @@ func Test_Component_ReferenceGet(t *testing.T) {
 	mgr := ecs.NewManager()
 
 	e1 := mgr.NewEntity()
-	c1 := TestEmptyCom{}
+	c1 := EmptyCom{}
 	e1.AddComponent(&c1)
 
 	e2 := mgr.NewEntity()
-	c2 := TestSerialRefCom{Ref: NewTestEmptyComRef(&c1)}
+	c2 := SerialRefCom{Ref: NewEmptyComRef(&c1)}
 	e2.AddComponent(&c2)
 
 	if c2.Ref.Get() != &c1 {
