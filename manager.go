@@ -13,43 +13,59 @@ import (
 // references between components of different entities.
 type Manager struct {
 	world     *World
-	systems   map[string]System
-	tickers   map[string]Ticker
-	receivers map[string]Receiver
+	systems   []System
+	updaters  []FixedUpdater
+	tickers   []Ticker
+	receivers []Receiver
 }
 
 // NewManager constructs a new Manager instance
 func NewManager() *Manager {
-	m := Manager{
-		systems:   make(map[string]System),
-		tickers:   make(map[string]Ticker),
-		receivers: make(map[string]Receiver),
-	}
+	m := Manager{}
 	m.world = NewWorld(&m)
 	return &m
+}
+
+// MustRegisterSystem calls RegisterSystem and panics if there's an error
+func (m *Manager) MustRegisterSystem(s System) {
+	err := m.RegisterSystem(s)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // RegisterSystem adds a system to the Manager.
 // It should be called before any components are added to entities.
 func (m *Manager) RegisterSystem(s System) error {
 	name := s.GetName()
-	if _, ok := m.systems[name]; ok {
-		return fmt.Errorf("cannot register system %s because it is already registered", name)
+	for _, v := range m.systems {
+		if v.GetName() == name {
+			return fmt.Errorf("cannot register system %s because it is already registered", name)
+		}
 	}
-	m.systems[s.GetName()] = s
+	m.systems = append(m.systems, s)
 
+	if updater, ok := s.(FixedUpdater); ok {
+		m.updaters = append(m.updaters, updater)
+	}
 	if ticker, ok := s.(Ticker); ok {
-		m.tickers[s.GetName()] = ticker
+		m.tickers = append(m.tickers, ticker)
 	}
 	if receiver, ok := s.(Receiver); ok {
-		m.receivers[s.GetName()] = receiver
+		m.receivers = append(m.receivers, receiver)
 	}
 
 	return nil
 }
 
-// Tick should be called once per frame.
-// This calls Tick on each registered system.
+// FixedUpdate calls FixedUpdate on each registered system
+func (m *Manager) FixedUpdate(dt float64) {
+	for _, s := range m.updaters {
+		s.FixedUpdate(dt)
+	}
+}
+
+// Tick calls Tick on each registered system
 func (m *Manager) Tick(dt time.Duration) {
 	for _, t := range m.tickers {
 		t.Tick(dt)

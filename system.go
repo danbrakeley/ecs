@@ -14,6 +14,11 @@ type Ticker interface {
 	Tick(dt time.Duration) // called every frame; dt is time since last frame
 }
 
+// FixedUpdater is the interface for systems that can recieve FixedUpdates
+type FixedUpdater interface {
+	FixedUpdate(dt float64) // called every frame; dt is time in seconds since last (fixed) frame
+}
+
 // Receiver is the interface for systems that want to hear broadcasts
 type Receiver interface {
 	HandleBroadcast(e *Entity)
