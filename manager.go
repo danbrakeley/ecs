@@ -17,11 +17,14 @@ type Manager struct {
 	updaters  []FixedUpdater
 	tickers   []Ticker
 	receivers []Receiver
+
+	// some metrics
+	Stats Stats
 }
 
 // NewManager constructs a new Manager instance
 func NewManager() *Manager {
-	m := Manager{}
+	m := Manager{Stats: NewStats(time.Now())}
 	m.world = NewWorld(&m)
 	return &m
 }
@@ -61,7 +64,9 @@ func (m *Manager) RegisterSystem(s System) error {
 // FixedUpdate calls FixedUpdate on each registered system
 func (m *Manager) FixedUpdate(dt float64) {
 	for _, s := range m.updaters {
+		start := time.Now()
 		s.FixedUpdate(dt)
+		m.Stats.AddSystemFrame(s.GetName(), time.Now().Sub(start))
 	}
 }
 
@@ -84,6 +89,7 @@ func (m *Manager) RecreateEntity(id string) *Entity {
 
 // newEntityWithID constructs an entity with the given ID
 func (m *Manager) newEntityWithID(id string) *Entity {
+	m.Stats.NumEntityCreate++
 	e := &Entity{
 		manager:    m,
 		components: make(map[ComponentName]Component),
@@ -110,6 +116,7 @@ func (m *Manager) UpdateEntity(e *Entity) {
 // DropEntity is an internal func, meant to be called by an Entity when it wants to be removed.
 // All systems should remove this entity and all components from their internal lists.
 func (m *Manager) DropEntity(e *Entity) {
+	m.Stats.NumEntityDelete++
 	for _, s := range m.systems {
 		s.DropEntity(e)
 	}

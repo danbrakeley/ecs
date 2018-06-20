@@ -11,15 +11,18 @@ type System interface {
 
 // Ticker is the interface for systems that can recieve Ticks
 type Ticker interface {
+	GetName() string       // return a unique name for this system (ie "FooSystem")
 	Tick(dt time.Duration) // called every frame; dt is time since last frame
 }
 
 // FixedUpdater is the interface for systems that can recieve FixedUpdates
 type FixedUpdater interface {
+	GetName() string        // return a unique name for this system (ie "FooSystem")
 	FixedUpdate(dt float64) // called every frame; dt is time in seconds since last (fixed) frame
 }
 
 // Receiver is the interface for systems that want to hear broadcasts
 type Receiver interface {
+	GetName() string // return a unique name for this system (ie "FooSystem")
 	HandleBroadcast(e *Entity)
 }
